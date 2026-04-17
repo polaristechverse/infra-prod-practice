@@ -53,7 +53,7 @@ pipeline {
             }
             steps {
                 sh 'terraform init'
-                sh 'terraform destory --auto-approve'
+                sh 'terraform destroy --auto-approve'
             }
         }
          stage('Ansible apply'){
