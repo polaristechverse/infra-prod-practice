@@ -1,0 +1,95 @@
+#SPDX-License-Identifier: MIT-0
+---
+# tasks file for common
+- name: disable swap
+  shell: swapoff -a
+
+- name: remove swap from fstab
+  replace:
+    path: /etc/fstab
+    regexp: 'swap'
+    replace: '#swap'
+
+- name: load kernel module
+  modprobe:
+    name: br_netfilter
+    state: present
+
+- name: enable iptables
+  sysctl:
+    name: net.bridge.bridge-nf-call-iptables
+    value: 1
+    state: present
+# Install dependencies
+- name: install docker dependencies
+  apt:
+    name: "{{ item }}"
+    state: present
+    update_cache: yes
+  with_items: "{{ dependencies }}"
+# Install Docker (only if not installed)
+- name: install docker
+  shell: curl -fsSL https://get.docker.com | bash
+  args:
+    creates: /usr/bin/docker
+# Start Docker
+- name: start docker
+  service:
+    name: docker
+    state: started
+    enabled: yes
+# Download cri-dockerd
+- name: download cri-dockerd
+  get_url:
+    url: "https://github.com/Mirantis/cri-dockerd/releases/download/v0.3.24/cri-dockerd-0.3.24.amd64.tgz"
+    dest: /tmp/cri-dockerd.tgz
+  when: not ansible_facts['distribution'] is undefined
+# Extract cri-dockerd
+- name: extract cri-dockerd
+  unarchive:
+    src: /tmp/cri-dockerd.tgz
+    dest: /tmp/
+    remote_src: yes
+
+# Move binary
+- name: move cri-dockerd binary
+  copy:
+    src: /tmp/cri-dockerd/cri-dockerd
+    dest: /usr/local/bin/cri-dockerd
+    mode: '0755'
+    remote_src: yes
+
+# Download service files
+- name: download service file
+  get_url:
+    url: https://raw.githubusercontent.com/Mirantis/cri-dockerd/master/packaging/systemd/cri-docker.service
+    dest: /etc/systemd/system/cri-docker.service
+
+- name: download socket file
+  get_url:
+    url: https://raw.githubusercontent.com/Mirantis/cri-dockerd/master/packaging/systemd/cri-docker.socket
+    dest: /etc/systemd/system/cri-docker.socket
+
+# Fix path in service file
+- name: update cri-docker service path
+  replace:
+    path: /etc/systemd/system/cri-docker.service
+    regexp: '/usr/bin/cri-dockerd'
+    replace: '/usr/local/bin/cri-dockerd'
+
+# Reload systemd
+- name: reload systemd
+  command: systemctl daemon-reexec
+
+# Enable and start cri-dockerd
+- name: start cri-docker service
+  service:
+    name: cri-docker
+    state: started
+    enabled: yes
+
+- name: start cri-docker socket
+  service:
+    name: cri-docker.socket
+    state: started
+    enabled: yes
