@@ -1,0 +1,5 @@
+---
+- name: join worker nodes to cluster
+  shell: "{{ hostvars[groups['kubernetes_master'] | first]['join_command'] }} --cri-socket=unix:///var/run/cri-dockerd.sock"
+  args:
+    creates: /etc/kubernetes/kubelet.conf

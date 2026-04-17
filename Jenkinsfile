@@ -56,5 +56,14 @@ pipeline {
                 sh 'terraform destory --auto-approve'
             }
         }
+         stage('Ansible apply'){
+             when{
+                expression { return params.Ansible_Build == 'yes '}
+            }
+            steps{
+                sh 'ansible-playbook -i invfile site.yaml --syntax-check'
+                sh 'ansible-playbook -i invfile site.yaml --check'
+            }
+        }
     }
 }
