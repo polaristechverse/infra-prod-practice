@@ -49,7 +49,7 @@ pipeline {
         }
         stage('Terraform_Destory'){
             when{
-                expression { return params.TERRAFORM_DESTROY == 'yes '}
+                expression { return params.TERRAFORM_DESTROY == 'yes'}
             }
             steps {
                 sh 'terraform init'
@@ -58,7 +58,7 @@ pipeline {
         }
          stage('Ansible apply'){
              when{
-                expression { return params.Ansible_Build == 'yes '}
+                expression { return params.Ansible_Build == 'yes'}
             }
             steps{
                 sh 'ansible-playbook -i invfile site.yaml --syntax-check'
