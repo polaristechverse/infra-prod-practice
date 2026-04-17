@@ -6,19 +6,19 @@
     - kube_packages
 
 - name: initialize master
-  hosts: kubernetes_master
+  hosts: Kuberentes_Master
   become: yes
   roles:
     - master_init
 
 - name: join workers
-  hosts: kubernetes_worker
+  hosts: Kubernetes_Workers
   become: yes
   roles:
     - worker_join
 
 - name: install network plugin
-  hosts: kubernetes_master
+  hosts: Kuberentes_Master
   become: yes
   roles:
     - network_plugin
